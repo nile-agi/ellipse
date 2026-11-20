@@ -1,7 +1,7 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../imgs/ellipse.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="../imgs/ellipse.png">
   <img alt="Ellipse logo" src="../imgs/ellipse.png" width="50%">
 </picture>
 

@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="imgs/ellipse.svg">
-  <img alt="Ellipse logo" src="imgs/ellipse.svg" width="50%">
+  <source media="(prefers-color-scheme: dark)" srcset="imgs/ellipse.png">
+  <img alt="Ellipse logo" src="imgs/ellipse.png" width="50%">
 </picture>
 
 # Ellipse
@@ -12,9 +12,18 @@ A PyTorch-like AI engine built from scratch in pure C.
 Something between [tinygrad](https://tinygrad.org/), [PyTorch](https://github.com/pytorch/pytorch), [micrograd](https://github.com/karpathy/micrograd), and [XLA](https://openxla.org/xla).
 Maintained by [nileAGI](https://www.nileagi.com/).
 
+<!-- [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Language: C11](https://img.shields.io/badge/language-C11-A8B9CC.svg?logo=c&logoColor=white)](ellipse.h)
+[![GitHub stars](https://img.shields.io/github/stars/nile-agi/ellipse?cache_bust=1)](https://github.com/nile-agi/ellipse/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/commits/main)
+[![Open issues](https://img.shields.io/github/issues/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing) -->
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Language: C11](https://img.shields.io/badge/language-C11-A8B9CC.svg?logo=c&logoColor=white)](ellipse.h)
-[![GitHub stars](https://img.shields.io/github/stars/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/nile-agi/ellipse?cache_bust=1)](https://github.com/nile-agi/ellipse/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/forks)
+[![GitHub watchers](https://img.shields.io/github/watchers/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/watchers)
 [![Last commit](https://img.shields.io/github/last-commit/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/commits/main)
 [![Open issues](https://img.shields.io/github/issues/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)

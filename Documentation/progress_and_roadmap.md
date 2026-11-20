@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="../imgs/ellipse.svg">
-  <img alt="Ellipse logo" src="../imgs/ellipse.svg" width="50%">
+  <source media="(prefers-color-scheme: dark)" srcset="../imgs/ellipse.png">
+  <img alt="Ellipse logo" src="../imgs/ellipse.png" width="50%">
 </picture>
 
 **Ellipse**: Something between [PyTorch](https://github.com/pytorch/pytorch), [micrograd](https://github.com/karpathy/micrograd), and [XLA](https://openxla.org/xla). Maintained by [nileAGI](https://www.nileagi.com/).
