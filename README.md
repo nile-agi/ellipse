@@ -14,9 +14,9 @@ Maintained by [nileAGI](https://www.nileagi.com/).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Language: C11](https://img.shields.io/badge/language-C11-A8B9CC.svg?logo=c&logoColor=white)](ellipse.h)
-[![GitHub stars](https://img.shields.io/github/stars/oderoi/ellipse)](https://github.com/oderoi/ellipse/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/oderoi/ellipse)](https://github.com/oderoi/ellipse/commits/main)
-[![Open issues](https://img.shields.io/github/issues/oderoi/ellipse)](https://github.com/oderoi/ellipse/issues)
+[![GitHub stars](https://img.shields.io/github/stars/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/commits/main)
+[![Open issues](https://img.shields.io/github/issues/nile-agi/ellipse)](https://github.com/nile-agi/ellipse/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
 [Documentation](Documentation/documentation.md) | [Quick Start](Documentation/quick_start.md) | [Progress and Roadmap](Documentation/progress_and_roadmap.md) | [Announcement Blog Post](https://www.nileagi.com/blog/ellipse-introduction)
@@ -50,7 +50,7 @@ Ellipse is a good fit if you want to:
 You need a C11 compiler (GCC or Clang) — nothing else.
 
 ```sh
-git clone https://github.com/oderoi/ellipse.git
+git clone https://github.com/nile-agi/ellipse.git
 cd ellipse
 ```
 

@@ -24,7 +24,7 @@ This guide assumes no prior knowledge of C, PyTorch, or any other deep learning 
 ## 1. Get the code
 
 ```sh
-git clone https://github.com/oderoi/ellipse.git
+git clone https://github.com/nile-agi/ellipse.git
 cd ellipse
 ```
 

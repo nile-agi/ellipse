@@ -24,7 +24,7 @@ Ellipse is a minimal deep learning library written in pure C (C11), with no depe
 ## Installation
 
 ```sh
-git clone https://github.com/oderoi/ellipse.git
+git clone https://github.com/nile-agi/ellipse.git
 ```
 
 To use it in your own project, copy **both** `ellipse.h` and `ellipse.c` into your project, then compile them together with your code:
