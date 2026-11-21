@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <math.h>
 
 /*
@@ -64,7 +65,7 @@ typedef enum
 /*
     Tensor Structure
     ----------------
-    This is the skelleton or building bloch of Tensor's.
+    This is the skelleton or building block of Tensor's.
 
     It carry, data that also pointing to Data union with int and float pointers.
 
@@ -77,23 +78,37 @@ typedef enum
     dtype is the data type of the tensor, this help us to allocate proper memory location to tensor and help in defining defferent random's, also simplify print of tensor.
 */
 typedef struct {
-    Data data;
-    int *shape;
-    int size;
+    const int *dims;
     int ndim;
+} shape;
+typedef struct {
+    Data data;
+    shape shape;
+    int size;
     Dtype dtype; 
 } Tensor;
 //end Tensor Structure
 
-Tensor *tensor(void *data, const int *shape, Dtype dtype);
-Tensor *_rand(int *shape, int ndim);
-Tensor *_randn(int *shape, int ndim);
-Tensor *_randint(int low, int high, int *shape, int ndim);
-// Tensor *range(void *, void *, void *);
-Tensor *_zeros(int *shape, int ndim, Dtype dtype);
-Tensor *_ones(int *shape, int ndim, Dtype dtype);
-void free_t(Tensor *);
-void ellipse_seed(unsigned int seed);   /* seed the RNG once for reproducibility */
+/* Shape-from-brace-list helper:
+ *   size(2, 3)  →  int* dims, int ndim => (int[]){2, 3}, 2
+ *   size(10)    →  int* dims, int ndim => (int[]){10},   1
+ * The sizeof is never evaluated at runtime (C11 §6.5.3.4p2).
+ */
+#define Size(...) \
+    (int[]){__VA_ARGS__}, (int)(sizeof((int[]){__VA_ARGS__}) / sizeof(int))
+
+#define size(...) \
+    ((shape){Size(__VA_ARGS__)})
+
+// Tensor *tensor(void *data, const int *shape, int size, Dtype dtype);
+// Tensor *_rand(int *shape, int ndim);
+// Tensor *_randn(int *shape, int ndim);
+// Tensor *_randint(int low, int high, int *shape, int ndim);
+// // Tensor *range(void *, void *, void *);
+// Tensor *_zeros(int *shape, int ndim, Dtype dtype);
+// Tensor *_ones(int *shape, int ndim, Dtype dtype);
+// void free_t(Tensor *);
+// void ellipse_seed(unsigned int seed);   /* seed the RNG once for reproducibility */
 
 /*
     PyTorch-style namespace
@@ -112,28 +127,19 @@ typedef struct {
     Dtype _float;
 
     /* constructors */
-    int *(*shape) (int *);
-    Tensor *(*tensor)(void *data,const int *shape, Dtype dtype);
-    Tensor *(*rand)(int *shape , int ndim);
-    Tensor *(*randn)(int *shape , int ndim);
-    Tensor *(*randint)(int low, int high, int *shape, int ndim);
+    int *(*size) (int *);
+    Tensor *(*tensor)(void *data,shape shape, Dtype dtype);
+    Tensor *(*rand)(shape shape);
+    Tensor *(*randn)(shape shape);
+    Tensor *(*randint)(int low, int high, shape shape);
     // Tensor *range(void *, void *, void *);
-    Tensor *(*zeros)(int *shape, int ndim, Dtype dtype);
-    Tensor *(*ones)(int *shape, int ndim, Dtype dtype);
+    Tensor *(*zeros)(shape shape, Dtype dtype);
+    Tensor *(*ones)(shape shape, Dtype dtype);
     void (*free)(Tensor *);
     void (*seed)(unsigned int seed);
 } ellipse_api;
 
 extern const ellipse_api ellipse;
-
-/* Shape-from-brace-list helper:
- *   NAN_SHAPE(2, 3)  →  (int[]){2, 3}, 2
- *   NAN_SHAPE(10)    →  (int[]){10},   1
- * The sizeof is never evaluated at runtime (C11 §6.5.3.4p2).
- */
-#define Size(...) \
-    (int[]){__VA_ARGS__}, (int)(sizeof((int[]){__VA_ARGS__}) / sizeof(int))
-
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -153,6 +159,7 @@ void tensor_print(const Tensor *t, const char *name);   // const, named param
             _Generic((t),                                                   \
                      Tensor *:       1,                                     \
                      const Tensor *: 1,                                     \
+                     int *: 1,                                              \
                      default:        0),                                    \
             "print expects a Tensor* / const Tensor*");                     \
         tensor_print((const Tensor *)(t), #t);                              \

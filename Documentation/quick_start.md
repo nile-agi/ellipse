@@ -24,8 +24,8 @@ This guide assumes no prior knowledge of C, PyTorch, or any other deep learning 
 ## 1. Get the code
 
 ```sh
-git clone https://github.com/nile-agi/ellipse.git
-cd ellipse
+     git clone https://github.com/nile-agi/ellipse.git
+     cd ellipse
 ```
 
 Two files are the whole library:
@@ -44,28 +44,29 @@ A C11 compiler (GCC or Clang) and nothing else — no external dependencies. On 
 Create `main.c` next to `ellipse.h` and `ellipse.c`:
 
 ```c
-#include "ellipse.h"
+     #include "ellipse.h"
 
-int main(void) {
-    Tensor *x = tensor((float[]){1, 2, 3, 4, 5, 6}, (int[]){2, 3}, 2, _float);
-    print(x);
-    free_t(x);
-    return 0;
-}
+     int main(void) {
+     Tensor *x = ellipse.tensor((float[]){1, 2, 3, 4, 5, 6}, size(2, 3), ellipse._float);
+     print(x);
+     ellipse.free(x);
+
+     return 0;
+     }
 ```
 
 Build and run — note that `ellipse.c` is compiled **together with** your file:
 
 ```sh
-gcc -std=c11 -O2 -Wall main.c ellipse.c -lm -o main
-./main
+     gcc -std=c11 -O2 -Wall main.c ellipse.c -lm -o main    
+     ./main
 ```
 
 Output:
 
 ```text
-x = [[ 1.000000,  2.000000,  3.000000],
-     [ 4.000000,  5.000000,  6.000000]], dtype: _float
+     x = [[ 1.000000,  2.000000,  3.000000],
+          [ 4.000000,  5.000000,  6.000000]], dtype: _float
 ```
 
 If you see `undefined symbols` / `undefined reference` errors, you forgot `ellipse.c` in the compile command.
@@ -77,11 +78,10 @@ That one line looks dense, so let's take it apart:
 | Piece | Meaning |
 | --- | --- |
 | `Tensor *x` | A variable pointing to a `Tensor` — Ellipse's multi-dimensional array type. |
-| `tensor(...)` | Allocates a new tensor on the heap and **copies** your data into it. |
+| `ellipse.tensor(...)` | Allocates a new tensor on the heap and **copies** your data into it. |
 | `(float[]){1, 2, 3, 4, 5, 6}` | The data itself. `(float[])` is the array's type, `{...}` are the values. |
-| `(int[]){2, 3}` | The shape: 2 rows, 3 columns. |
-| `2` | `ndim` — how many dimensions the shape has. Currently `1` or `2`. |
-| `_float` | The dtype. Two exist today: `_int` and `_float`. |
+| `size(2, 3)` | The shape: 2 rows, 3 columns. |
+| `ellipse._float` | The dtype. Two exist today: `_int` and `_float`. |
 
 Two rules to remember:
 
@@ -93,102 +93,107 @@ Two rules to remember:
 ## 5. Printing and freeing
 
 - `print(x)` is a macro that prints the tensor **together with the variable's name**, PyTorch-style. It only accepts a `Tensor *` — passing anything else fails at compile time with a clear message.
-- `free_t(x)` releases everything the tensor owns (data, shape, struct). There is no garbage collector: **every tensor you create, you must free.**
+- `ellipse.free(x)` releases everything the tensor owns (data, shape, struct). There is no garbage collector: **every tensor you create, you must free.**
 
 ## 6. More ways to create tensors
 
 From existing integer data:
 
 ```c
-Tensor *x = tensor((int[]){1, 2, 3, 4}, (int[]){2, 2}, 2, _int);
-print(x);
-free_t(x);
+     Tensor *x = ellipsetensor((int[]){1, 2, 3, 4}, sixez(2, 2), ellipse._int);
+     print(x);
+     ellipse.free(x);
 ```
 
 ```text
-x = [[  1,   2],
-     [  3,   4]], dtype: _int
+     x = [[  1,   2],
+          [  3,   4]], dtype: _int
 ```
 
 Filled with zeros or ones:
 
 ```c
-Tensor *z = _zeros((int[]){2, 2}, 2, _int);
-Tensor *o = _ones((int[]){4}, 1, _float);
-print(z);
-print(o);
-free_t(z);
-free_t(o);
+     Tensor *z = ellipse._zeros(size(2, 2), ellipse._int);
+     Tensor *o = ellipse._ones(size(4), ellipse._float);
+     print(z);
+     print(o);
+
+     ellipse.free(z);
+     ellipse.free(o);
 ```
 
 ```text
-z = [[  0,   0],
-     [  0,   0]], dtype: _int
-o = [1.000000, 1.000000, 1.000000, 1.000000], dtype: _float
+     z = [[  0,   0],
+          [  0,   0]], dtype: _int
+     o = [1.000000, 1.000000, 1.000000, 1.000000], dtype: _float
 ```
 
 Random tensors (your values will differ):
 
 ```c
-Tensor *u = _rand((int[]){2, 3}, 2);            /* uniform floats in [0, 1)   */
-Tensor *n = _randn((int[]){2, 3}, 2);           /* standard normal (mean 0, std 1) */
-Tensor *i = _randint(1, 10, (int[]){2, 3}, 2);  /* ints in [1, 10) — high excluded */
-print(u);
-print(n);
-print(i);
-free_t(u);
-free_t(n);
-free_t(i);
+     Tensor *u = ellipse._rand(size(2, 3));            /* uniform floats in [0, 1)   */
+     Tensor *n = ellipse._randn((size(2, 3));           /* standard normal (mean 0, std 1) */
+     Tensor *i = ellipse._randint(1, 10, size(2, 3));  /* ints in [1, 10) — high excluded */
+     print(u);
+     print(n);
+     print(i);
+
+     ellipse.free(u);
+     ellipse.free(n);
+     ellipse.free(i);
 ```
 
 Want the same "random" numbers on every run? Seed once at the start of `main`:
 
 ```c
-torch.seed(42);
+     ellipse.seed(42);
 ```
 
 ## 7. The PyTorch-style API
 
-Every function is also available through the `torch` struct, so call sites read like PyTorch:
+Every function is also available through the `ellipse` struct, so call sites read like PyTorch:
 
-| Plain C | PyTorch-style |
+| Plain C | Does |
 | --- | --- |
-| `tensor(data, shape, ndim, dtype)` | `torch.tensor(data, shape, ndim, dtype)` |
-| `_rand(shape, ndim)` | `torch.rand(shape, ndim)` |
-| `_randn(shape, ndim)` | `torch.randn(shape, ndim)` |
-| `_randint(low, high, shape, ndim)` | `torch.randint(low, high, shape, ndim)` |
-| `_zeros(shape, ndim, dtype)` | `torch.zeros(shape, ndim, dtype)` |
-| `_ones(shape, ndim, dtype)` | `torch.ones(shape, ndim, dtype)` |
-| `free_t(t)` | `torch.free(t)` |
+| `ellipse.tensor(data, shape, ndim, dtype)` | `create tensor` |
+| `ellipse._rand(shape)` | `Generates a tensor of random floats from a uniform distribution on [0, 1) / (mean 0, standard deviation 1).` |
+| `ellipse._randn(shape)` | `Generates a tensor of random floats from the standard normal distribution, mean 0, standard deviation 1, via the Box–Muller transform.` |
+| `ellipse._randint(low, high, shape)` | `Generates a tensor of random integers between low (inclusive) and high (exclusive).` |
+| `ellipse._zeros(shape, dtype)` | `zeros tensors` |
+| `ellipse._ones(shape, dtype)` | `tensor ones` |
+| `ellipse.free(t)` | `free you tensor` |
 
-The `Size(...)` macro builds the shape **and** its dimension count for you: `Size(2, 3)` expands to `(int[]){2, 3}, 2`. And `torch._float` / `torch._int` mirror the dtype constants.
+The `Size(...)` macro builds the shape **and** its dimension count for you: `size(2, 3)` expands to `(int[]){2, 3}, 2`. And `ellipse._float` / `ellipse._int` mirror the dtype constants.
 
 ```c
-#include "ellipse.h"
+     #include "ellipse.h"
 
-int main(void) {
-    torch.seed(42);
+     int main(void) {
+     torch.seed(42);
 
-    Tensor *a = torch.ones(Size(2, 3), torch._float);
-    Tensor *b = torch.zeros(Size(2, 3), torch._float);
-    Tensor *r = torch.randn(Size(2, 3));
+     Tensor *a = ellipse.ones(size(2, 3), ellipse._float);
+     Tensor *b = ellipse.zeros(size(2, 3), ellipse._float);
+     Tensor *r = ellipse.randn(size(2, 3));
 
-    print(a);
-    print(b);
-    print(r);   /* random values — yours will differ */
+     print(a);
+     print(b);
+     print(r);   /* random values — yours will differ */
 
-    torch.free(a);
-    torch.free(b);
-    torch.free(r);
-    return 0;
-}
+     ellipse.free(a);
+     ellipse.free(b);
+     ellipse.free(r);
+
+     return 0;
+     }
 ```
 
 ```text
-a = [[ 1.000000,  1.000000,  1.000000],
-     [ 1.000000,  1.000000,  1.000000]], dtype: _float
-b = [[ 0.000000,  0.000000,  0.000000],
-     [ 0.000000,  0.000000,  0.000000]], dtype: _float
+     a = [[ 1.000000,  1.000000,  1.000000],
+          [ 1.000000,  1.000000,  1.000000]], dtype: _float
+
+          
+     b = [[ 0.000000,  0.000000,  0.000000],
+          [ 0.000000,  0.000000,  0.000000]], dtype: _float
 ```
 
 ## Where to go next

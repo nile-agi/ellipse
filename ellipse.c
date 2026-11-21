@@ -8,7 +8,7 @@
 /* ---- seeding: call once, or call ellipse_seed() for reproducibility ---- */
 static int ellipse_seeded = 0;
 
-void nan_seed(unsigned int seed) {
+void ellipse_seed(unsigned int seed){
     srand(seed);
     ellipse_seeded = 1;
 }
@@ -30,10 +30,10 @@ static void nan_ensure_seeded(void) {
     Note:
         This is for Internal Use only.
 */
-static int  _size(const int *shape, int ndim) {
+static int  _size(shape shape) {
     int size = 1;
-    for (int i = 0; i < ndim; i++) {
-        size *= shape[i];
+    for (int i = 0; i < shape.ndim; i++) {
+        size *= shape.dims[i];
     }
     return size;
 }
@@ -44,16 +44,14 @@ static int  _size(const int *shape, int ndim) {
     --------------
     This define dimension of the tensor or array.
 */
-static int _ndim(const int *shape) {
-    return (int)sizeof(shape)/sizeof(shape[0]);
-}
-
-
+// static int _ndim(const int *shape) {
+//     return (int)sizeof(shape)/sizeof(shape[0]);
+// }
 
 /*
-    tensor(data, shape, ndim, dtype)
-    --------------------------------
-    Initialize and Define Tensor *, that pass in array of data, shape, number of dimension (ndim) and data type(dtype).
+    ellipse.tensor(data, shape, dtype)
+    ---------------------------------
+    Initialize and Define Tensor *, that pass in array of data, shape and data type(dtype).
     This will give the freedom for different operations and grad calculation.
 
     ndim - dimension type of your Tensor, if it is 2D you will pass - ndim = 2 and if it is 1D, you will pass - ndim = 1
@@ -61,119 +59,118 @@ static int _ndim(const int *shape) {
     For now Tensor it suport only 2 type of dimensions , 1D and 2D
 
     Syntax:
-        Tensor *x = tensor((float[]){0.1, 0.2, 0.3, 0.4, 0.5, 0.6}, (int[]){2, 3}, 2, _float);
+        Tensor *x = ellipse.tensor((float[]){0.1, 0.2, 0.3, 0.4, 0.5, 0.6}, size(2, 3), ellipse._float);
 
-         print(x);
+        print(x);
 
-        free_t(x);
+        ellipse.free(x);
 
         Output:
             x = [[ 0.100000,  0.200000,  0.300000],
                 [ 0.400000,  0.500000,  0.600000]], dtype: _float
 
-        Tensor *x = tensor((int[]){1, 2, 3, 4}, (int[]){4}, 1, _int);
+        Tensor *x = ellipse.tensor((int[]){1, 2, 3, 4}, size(4), ellipse._int);
 
          print(x);
 
-        free_t(x);
+        ellipse.free(x);
 
         Output:
             x = [     1,      2,      3,      4], dtype: _int
 */
-Tensor *tensor(void *data, const int *shape, Dtype dtype){
-    Tensor *t = (Tensor *) malloc(sizeof(Tensor));
+Tensor *tensor(void *data, shape shape, Dtype dtype){
+    Tensor *t = (Tensor *) malloc(sizeof(*t));
     if (!t) return NULL;
 
-    int ndim = _ndim(shape);
-    int sizet = _size(shape, ndim);
+    int sizet = _size(shape);
 
-    t->ndim = ndim;
+    t->shape.ndim = shape.ndim;
     t->size = sizet;
     t->dtype = dtype;
 
-    t->shape = (int *)malloc(sizeof(int)*t->ndim);
-    if (!t->shape) {free(t); return NULL; }
+    t->shape.dims = malloc((sizeof(*shape.dims)) * (size_t)t->shape.ndim);
+    if (!t->shape.dims) {free(t); return NULL; }
 
-    memcpy(t->shape, shape, t->ndim*sizeof(int));
+    memcpy((void*)t->shape.dims, shape.dims, (size_t)t->shape.ndim*sizeof(int));
 
     switch (dtype)
     {
     case 0:
-        t->data._int = (int *) malloc(sizeof(int)*t->size);
-        if (!t->data._int) { free( t->shape); free(t); return NULL; }
-        memcpy(t->data._int, data, t->size*sizeof(int));
+        t->data._int = malloc((sizeof(*t->data._int)) * (size_t)t->size);
+        if (!t->data._int) { free((void*)t->shape.dims); free(t); return NULL; }
+        memcpy(t->data._int, data, (size_t)t->size*sizeof(int));
         break;
 
     case 1:
-        t->data._float = (float *) malloc(sizeof(float)*t->size);
-        if (!t->data._float) { free( t->shape); free(t); return NULL; }
-        memcpy(t->data._float, data, t->size*sizeof(float));
+        t->data._float = (float *) malloc((sizeof(*t->data._float)) * (size_t)t->size);
+        if (!t->data._float) { free( (void*)t->shape.dims); free(t); return NULL; }
+        memcpy(t->data._float, data, (size_t)t->size*sizeof(float));
         break;
-    
+
     default:
         fprintf(stderr, "Please make sure you pass the correct dtype : \"_int\" - for an integer dtype and \"_float\" for float dtype");
-        free(t->shape);
+        free((void*)t->shape.dims);
         free(t);
         return NULL;
         break;
     }
-    
+
     return t;
 }
 // end of Tensor
 
 
 /*
-    _rand(shape, ndim): 
+    ellipse._rand(shape):
     ------------------
     Generates a tensor of random floats from a uniform distribution on [0, 1) / (mean 0, standard deviation 1).
 
     It uses the current generator.
 
-        Formula: 
-            rand() / (RAND_MAX + 1)  
+        Formula:
+            rand() / (RAND_MAX + 1)
 
     Syntax:
-        _rand(shape, ndim)
+        ellipse._rand(shape, ndim)
 
         Return:
             Tensor *
-    
+
     Example:
-        Tensor *a = _rand((int[]){2, 3}, 2);
+        Tensor *a = ellipse._rand(size(2, 3));
 
-         print(a);
+        print(a);
 
-        free_t(a);
+        ellipse.free(a);
 
         Output:
             a = [[ 0.521612, -0.456259,  1.207947],
                  [-0.387763, -0.670170, -0.307190]], dtype: _float
 
-        Tesnor *b = _rand((int[]){10}, 1);
+        Tesnor *b = ellipse._rand((size(10));
 
-         print(b);
+        print(b);
 
-        free_t(b);
+        ellipse.free(b);
 
         Output:
             b = [-0.701645, -0.204627, 0.202153, -1.604854, -0.404581, -0.416625, 0.531158, 1.881386, -0.224445, -1.828255], dtype: _float
 */
-Tensor *_rand(int *shape, int ndim){
-    Tensor *t = (Tensor *) malloc(sizeof(Tensor));
+Tensor *_rand(shape shape){
+    Tensor *t = (Tensor *) malloc(sizeof(*t));
     if (!t) return NULL;
 
-    int sizet = _size(shape, ndim);
-    t->ndim = ndim;
+    int sizet = _size(shape);
+    t->shape.ndim = shape.ndim;
     t->size = sizet;
     t->dtype = _float;
 
-    t->shape = (int *)malloc(sizeof(int)*t->ndim);
-    if (!t->shape) { free(t); return NULL; }
-    memcpy(t->shape, shape, sizeof(int)*t->ndim);
+    t->shape.dims = (int *)malloc((sizeof(*t->shape.dims)) * (size_t)t->shape.ndim);
+    if (!t->shape.dims) { free(t); return NULL; }
+    memcpy((void*)t->shape.dims, shape.dims, sizeof(int)*(size_t)t->shape.ndim);
 
-    t->data._float = (float *)malloc(sizeof(float)*t->size);
-    if (!t->data._float) { free(t->shape); free(t); return NULL; }
+    t->data._float = (float *)malloc((sizeof(*t->data._float)) * (size_t)t->size);
+    if (!t->data._float) { free((void*)t->shape.dims); free(t); return NULL; }
 
     nan_ensure_seeded();
 
@@ -182,71 +179,71 @@ Tensor *_rand(int *shape, int ndim){
         t->data._float[i] = (float)rand() / denom;
 
     }
-    
+
     return t;
 }
 //    end of randn
 
 
 /*
-    _randn(shape, ndim)
+    ellipse._randn(shape)
     ------------------
     Generates a tensor of random floats from the standard normal distribution, mean 0, standard deviation 1, via the Box–Muller transform.
 
     It uses the current generator.
 
-    Formula: 
+    Formula:
             sqrt(-2 * ln(u1)) * cos(2π * u2),  u1, u2 ~ U(0, 1)
 
                 where:
-                    u1 :    random numbers from a uniform distribution between 0 and 1 (inclusive). 
+                    u1 :    random numbers from a uniform distribution between 0 and 1 (inclusive).
                             = rand() / RAND_MAX
 
-                    u2 :    random numbers from a uniform distribution between 0 and 1 (inclusive). 
+                    u2 :    random numbers from a uniform distribution between 0 and 1 (inclusive).
                             = rand() / RAND_MAX
 
     Syntax:
-        _randn(shape, ndim)
+        ellipse._randn(shape)
 
         Return:
             Tensor *
-    
+
     Example:
-        Tensor *a = _randn((int[]){2, 3}, 2);
+        Tensor *a = ellipse._randn(size(2, 3));
 
-         print(a);
+        print(a);
 
-        free_t(a);
+        ellipse.free(a);
 
         Output:
             a = [[ 0.762251,  0.144962,  0.379993],
                  [ 0.547818,  0.175760,  0.999096]], dtype: _float
 
-        Tesnor *b = _randn((int[]){10}, 1);
+        Tesnor *b = ellipse._randn((size(10));
 
-         print(b);
+        print(b);
 
-        free_t(b);
+        ellipse.free(b);
 
         Output:
             b = [0.762892, 0.931061, 0.339630, 0.157129, 0.862674, 0.953750, 0.670879, 0.455913, 0.531983, 0.033875], dtype: _float
 */
 
-Tensor *_randn(int *shape, int ndim){
-    Tensor *t = (Tensor *)malloc(sizeof(Tensor));
+Tensor *_randn(shape shape){
+    Tensor *t = (Tensor *)malloc(sizeof(*t));
     if (!t) return NULL;
 
-    int sizet = _size(shape, ndim);
-    t->ndim = ndim;
+    int sizet = _size(shape);
+    t->shape.ndim = shape.ndim;
     t->size = sizet;
     t->dtype = _float;
 
-    t->shape = (int *)malloc(sizeof(int)*t->ndim);
-    if (!t->shape) { free(t); return NULL; }
-    memcpy(t->shape, shape, sizeof(int)*t->ndim);
+    t->shape.dims = (int *)malloc((sizeof(*t->shape.dims)) * (size_t)t->shape.ndim);
+    if (!t->shape.dims) { free(t); return NULL; }
+    memcpy((void*)t->shape.dims, shape.dims, sizeof(int)*(size_t)t->shape.ndim);
 
-    t->data._float = (float *)malloc(sizeof(float)*t->size);
-    if (!t->data._float) { free(t->shape); free(t); return NULL; }
+    t->data._float = (float *)malloc((sizeof(*t->data._float)) * (size_t)t->size);
+    if (!t->data._float) { free((void*)t->shape.dims); free(t); return NULL; }
 
     nan_ensure_seeded();
 
@@ -259,7 +256,7 @@ Tensor *_randn(int *shape, int ndim){
         do {
             u1 = (float)rand() / denom;
         } while (u1 <= 0.0f);
-        
+
         u2 = (float)rand() / denom;
 
         t->data._float[i] = sqrtf(-2.0f * logf(u1)) * cosf(2.0f * (float)M_PI * u2);
@@ -270,26 +267,26 @@ Tensor *_randn(int *shape, int ndim){
 
 
 /*
-    _randint(low, high, shape, ndim)
+    ellipse._randint(low, high, shape)
     -------------------------------
-        Generates a tensor of random integers between low (inclusive) and high (exclusive). 
+        Generates a tensor of random integers between low (inclusive) and high (exclusive).
         It uses the current generator.
 
         Formular:
             low + (rand() % (high - low + 1))
 
     Syntax:
-        _randint(low, high, shape, ndim)
+        ellipse._randint(low, high, shape)
 
         Return:
             Tensor *
-    
+
     Example:
-        Tensor *a = _randint(1, 10 (int[]){5, 2}, 2);
+        Tensor *a = ellipse._randint(1, 10, size(5, 2));
 
         print(a);
 
-        free_t(a);
+        ellipse.free(a);
 
         Output:
             a = [[4, 7],
@@ -298,18 +295,18 @@ Tensor *_randn(int *shape, int ndim){
                  [2, 3],
                  [1, 5]], dtype: _int
 
-        Tesnor *b = _randint(20, 30, (int[]){10}, 1);
+        Tesnor *b = ellipse._randint(20, 30, size(10));
 
-         print(b);
+        print(b);
 
-        free_t(b);
+        ellipse.free(b);
 
         Output:
             b = [    26,     20,     28,     24,     29,     20,     23,     23,     23,     24], dtype: _int
 */
-Tensor *_randint(int low, int high, int *shape, int ndim){
+Tensor *_randint(int low, int high, shape shape){
     /* --- 1. validate BEFORE allocating anything --- */
-    if (!shape || ndim < 0) {
+    if (!shape.dims || shape.ndim < 0) {
         fprintf(stderr, "randint: bad shape/ndim\n");
         return NULL;
     }
@@ -319,20 +316,20 @@ Tensor *_randint(int low, int high, int *shape, int ndim){
     }
 
     /* --- 2. only now allocate --- */
-    Tensor *t = (Tensor *)malloc(sizeof(Tensor));
+    Tensor *t = (Tensor *)malloc(sizeof(*t));
     if (!t) return NULL;
 
-    int sizet = _size(shape, ndim);
-    t->ndim = ndim;
+    int sizet = _size(shape);
+    t->shape.ndim = shape.ndim;
     t->size = sizet;
     t->dtype = _int;
 
-    t->shape = (int *)malloc(sizeof(int)*t->ndim);
-    if (!t->shape) { free(t); return NULL; }
-    memcpy(t->shape, shape, sizeof(int)*t->ndim);
+    t->shape.dims = (int *)malloc((sizeof(*t->shape.dims)) * (size_t)t->shape.ndim);
+    if (!t->shape.dims) { free(t); return NULL; }
+    memcpy((void*)t->shape.dims, shape.dims, sizeof(int)*(size_t)t->shape.ndim);
 
-    t->data._int = (int *)malloc(sizeof(int)*t->size);
-    if (!t->data._int) { free(t->shape); free(t); return NULL; }
+    t->data._int = (int *)malloc((sizeof(*t->data._int)) * (size_t)t->size);
+    if (!t->data._int) { free((void*)t->shape.dims); free(t); return NULL; }
 
     nan_ensure_seeded();
 
@@ -347,92 +344,92 @@ Tensor *_randint(int low, int high, int *shape, int ndim){
 }
 // end of randint
 
-Tensor *_ones(int* shape, int ndim, Dtype dtype){
-    Tensor *t = (Tensor *)malloc(sizeof(Tensor));
+Tensor *_ones(shape shape, Dtype dtype){
+    Tensor *t = (Tensor *)malloc(sizeof(*t));
     if (!t) return NULL;
 
-    int sizet = _size(shape, ndim);
+    int sizet = _size(shape);
 
-    t->ndim = ndim;
+    t->shape.ndim = shape.ndim;
     t->size = sizet;
     t->dtype = dtype;
 
-    t->shape = (int *)malloc(sizeof(int)*t->ndim);
-    if (!t->shape) { free(t); return NULL; }
+    t->shape.dims = (int *)malloc((sizeof(*t->shape.dims)) * (size_t)t->shape.ndim);
+    if (!t->shape.dims) { free(t); return NULL; }
 
-    memcpy(t->shape, shape, sizeof(int)*t->ndim);
+    memcpy((void*)t->shape.dims, shape.dims, sizeof(int)*(size_t)t->shape.ndim);
 
     switch (t->dtype)
     {
     case _int:
-        t->data._int = (int *)malloc(sizeof(int)*t->size);
-        if (!t->data._int) { free(t->shape); free(t); return NULL; }
+        t->data._int = (int *)malloc((sizeof(*t->data._int)) * (size_t)t->size);
+        if (!t->data._int) { free((void*)t->shape.dims); free(t); return NULL; }
         for (int i = 0; i < t->size; i++)
         {
             t->data._int[i] = 1;
         }
-        
+
         break;
 
     case _float:
-        t->data._float = (float *)malloc(sizeof(float)*t->size);
-        if (!t->data._float) { free(t->shape); free(t); return NULL; }
+        t->data._float = (float *)malloc((sizeof(*t->data._float)) * (size_t)t->size);
+        if (!t->data._float) { free((void*)t->shape.dims); free(t); return NULL; }
         for (int i = 0; i < t->size; i++)
         {
             t->data._float[i] = 1.f;
         }
-        
+
         break;
-    
+
     default:
         fprintf(stderr, "_ones: invalid dtype\n");
-        free(t->shape);
+        free((void*)t->shape.dims);
         free(t);
         return NULL;
     }
     return t;
 }
 
-Tensor *_zeros(int* shape, int ndim, Dtype dtype){
-    Tensor *t = (Tensor *)malloc(sizeof(Tensor));
+Tensor *_zeros(shape shape, Dtype dtype){
+    Tensor *t = (Tensor *)malloc(sizeof(*t));
     if (!t) return NULL;
 
-    int sizet = _size(shape, ndim);
+    int sizet = _size(shape);
 
-    t->ndim = ndim;
+    t->shape.ndim = shape.ndim;
     t->size = sizet;
     t->dtype = dtype;
 
-    t->shape = (int *)malloc(sizeof(int)*t->ndim);
-    if (!t->shape) { free(t); return NULL; }
+    t->shape.dims = (int *)malloc((sizeof(*t->shape.dims)) * (size_t)t->shape.ndim);
+    if (!t->shape.dims) { free(t); return NULL; }
 
-    memcpy(t->shape, shape, sizeof(int)*t->ndim);
+    memcpy((void*)t->shape.dims, shape.dims, sizeof(int)*(size_t)t->shape.ndim);
 
     switch (t->dtype)
     {
     case _int:
-        t->data._int = malloc(sizeof(int) * t->size);
-        if (!t->data._int) { free(t->shape); free(t); return NULL; }
+        t->data._int = malloc((sizeof(*t->data._int)) * (size_t)t->size);
+        if (!t->data._int) { free((void*)t->shape.dims); free(t); return NULL; }
         for (int i = 0; i < t->size; i++)
         {
             t->data._int[i] = 0;
         }
-        
+
         break;
 
     case _float:
-        t->data._float = (float *)malloc(sizeof(float)*t->size);
-        if (!t->data._float) { free(t->shape); free(t); return NULL; }
+        t->data._float = (float *)malloc((sizeof(*t->data._float)) * (size_t)t->size);
+        if (!t->data._float) { free((void*)t->shape.dims); free(t); return NULL; }
         for (int i = 0; i < t->size; i++)
         {
             t->data._float[i] = 0.f;
         }
-        
+
         break;
-    
+
     default:
         fprintf(stderr, "_ones: invalid dtype\n");
-        free(t->shape);
+        free((void*)t->shape.dims);
         free(t);
         return NULL;
     }
@@ -451,18 +448,18 @@ Tensor *_zeros(int* shape, int ndim, Dtype dtype){
     Free the assigned Tensor * from the memory address, that you don't use any more from the memory.
 
     Syntax:
-        free_t(Tensor *)
+        ellipse.free(Tensor *)
 
         Return:
                 NONE
 
     Example:
-        Tensor *w = randd((int[]){10,2}, 2);
+        Tensor *w = ellipse.randd(size(2,5));
 
         print(w);
 
         // this free the w from the memory.
-        free_t(w);
+        ellipse.free(w);
 
         Output:
             w = [[-0.624843,  0.296725],
@@ -490,12 +487,12 @@ void free_t(Tensor *m){
     case _float:
         free(m->data._float);
         break;
-    
+
     default:
         break;
     }
-    
-    free(m->shape);
+
+    free((void*)m->shape.dims);
     free(m);
 }
 // end of free_t
@@ -510,7 +507,7 @@ void free_t(Tensor *m){
     What amaizing is that this function is not the one that actually printing our output although I mentiioned earlyer that is does.
 
     I define a macro function called print that take in Tensor *t and special preprocessor directive (#t) and implement tensor_print function in it's body.
-    
+
     Note: At torch.h header I defined
         void tensor_print(Tensor *t, const char *);
         #define print(t) tensor_print(t, #t)
@@ -519,7 +516,7 @@ void free_t(Tensor *m){
         void tensor_print(Tensor *t, const char *);
             - This declare the tensor_print function
             - it takes Tensor structure (Tensor *t) and const cahr *,.. const keyword indicate function will not modify the string pointer.
-        
+
         #define print(t) tensor_print(t, #t)
             - This define print macro (#define), This tell compiler to link it during compilation stage.
             - print(t) is the macro name, whenever print(t) is used the compiler replace it with tensor_print(t, #t).
@@ -531,16 +528,16 @@ void free_t(Tensor *m){
 
 void tensor_print(const Tensor *t, const char * name){
     if (!t) { printf("%s = (null)\n", name); return; }
-    
+
     printf("%s = ", name);
 
-    switch (t->ndim)
+    switch (t->shape.ndim)
     {
     case 1:
         switch (t->dtype)
         {
             case _int:
-                printf("[");    
+                printf("[");
                 for (int i = 0; i < t->size; i++)
                 {
                     if (i == t->size - 1)
@@ -555,7 +552,7 @@ void tensor_print(const Tensor *t, const char * name){
                     {
                         printf("%2d, ", t->data._int[i]);
                     }
-                    
+
                 }
                 printf("], dtype: %s\n", "_int");
                 break;
@@ -576,15 +573,15 @@ void tensor_print(const Tensor *t, const char * name){
                     {
                         printf("%8f, ", t->data._float[i]);
                     }
-            
+
                 }
                 printf("], dtype: %s\n", "_float");
                 break;
-            
+
             default:
                 break;
         }
-        
+
         break;
 
     case 2:
@@ -592,9 +589,9 @@ void tensor_print(const Tensor *t, const char * name){
             {
             case _int:
                 printf("[");
-                for (int i = 0; i < t->shape[0]; i++)
+                for (int i = 0; i < t->shape.dims[0]; i++)
                 {
-                    if (i > 0 && i < t->shape[0])
+                    if (i > 0 && i < t->shape.dims[0])
                     {
                         printf("     [");
                     } else
@@ -602,46 +599,46 @@ void tensor_print(const Tensor *t, const char * name){
                         printf("[");
                     }
 
-                    for (int j = 0; j < t->shape[1]; j++)
+                    for (int j = 0; j < t->shape.dims[1]; j++)
                     {
                         // if (j == 0)
                         // {
                         //     printf("%d", t->data._int[i*t->shape[1] + j]);
                         //     continue;
                         // }
-                        
+
                         // if (j > 0)
                         // {
                         //     printf(", %2d", t->data._int[i*t->shape[1] + j]);
-                        // } 
-                        if (j < t->shape[1]-1)
+                        // }
+                        if (j < t->shape.dims[1]-1)
                         {
-                            printf("%3d, ", t->data._int[i*t->shape[1] + j]);
+                            printf("%3d, ", t->data._int[i*t->shape.dims[1] + j]);
                         } else
                         {
-                            printf("%3d", t->data._int[i*t->shape[1] + j]);
-                        }  
-                        
+                            printf("%3d", t->data._int[i*t->shape.dims[1] + j]);
+                        }
+
                     }
-        
-                    if (i<t->shape[0]-1)
+
+                    if (i<t->shape.dims[0]-1)
                     {
                     printf("],\n");
                     } else
                     {
                         printf("]");
-                    }     
+                    }
                 }
                 // switch to print dtype at the end of the tensor x = [[...]], dtype = _int/_float
-                
+
                 printf("], dtype: %s\n", "_int");
                 break;
 
                 case _float:
                 printf("[");
-                for (int i = 0; i < t->shape[0]; i++)
+                for (int i = 0; i < t->shape.dims[0]; i++)
                 {
-                    if (i > 0 && i < t->shape[0])
+                    if (i > 0 && i < t->shape.dims[0])
                     {
                         printf("     [");
                     } else
@@ -649,28 +646,28 @@ void tensor_print(const Tensor *t, const char * name){
                         printf("[");
                     }
 
-                    for (int j = 0; j < t->shape[1]; j++)
+                    for (int j = 0; j < t->shape.dims[1]; j++)
                     {
-                        if (j < t->shape[1]-1)
+                        if (j < t->shape.dims[1]-1)
                         {
-                            printf("%9f, ", t->data._float[i*t->shape[1] + j]);
+                            printf("%9f, ", t->data._float[i*t->shape.dims[1] + j]);
                         } else
                         {
-                            printf("%9f", t->data._float[i*t->shape[1] + j]);
-                        }  
-                        
+                            printf("%9f", t->data._float[i*t->shape.dims[1] + j]);
+                        }
+
                     }
-        
-                    if (i<t->shape[0]-1)
+
+                    if (i<t->shape.dims[0]-1)
                     {
                     printf("],\n");
                     } else
                     {
                         printf("]");
-                    }   
-                    
+                    }
+
                 }
-                
+
                 printf("], dtype: %s\n", "_float");
                 break;
 
@@ -679,7 +676,7 @@ void tensor_print(const Tensor *t, const char * name){
 
             }
         break;
-    
+
     default:
         break;
     }
@@ -695,7 +692,7 @@ const ellipse_api ellipse = {
     .randn   = _randn,
     .randint = _randint,
     .free    = free_t,
-    .seed    = nan_seed,
+    .seed    = ellipse_seed,
 };
 
 // end of the tensor_print

@@ -69,16 +69,18 @@ Create `main.c` next to `ellipse.h` and `ellipse.c`:
 #include "ellipse.h"
 
 int main(void) {
-    /* Plain C API: data, shape, ndim, dtype */
-    Tensor *x = tensor((float[]){1, 2, 3, 4, 5, 6}, (int[]){2, 3}, 2, _float);
-    print(x);          /* prints the tensor together with its variable name */
-    free_t(x);
+    /* Plain C API: data, shape, ndim, dtype  |  PyTorch-style API */
+    
+    Tensor *x = ellipse.tensor((float[]){1, 2, 3, 4, 5, 6}, size(2, 3), ellipse._float);
+    print(x);                                     /* prints the tensor together with its variable name */
+    ellipse.free(x);
 
-    /* PyTorch-style API */
-    torch.seed(42);                            /* optional: reproducible randoms */
-    Tensor *w = torch.randn((int[]){2, 3}, 2); /* 2x3, standard normal */
+    
+    ellipse.seed(42);                             /* optional: reproducible randoms */
+    Tensor *w = ellipse.randn(size(3,4));         /* 3x4, standard normal */
     print(w);
-    torch.free(w);
+    ellipse.free(w);
+
     return 0;
 }
 ```
@@ -92,9 +94,14 @@ gcc -std=c11 -O2 -Wall main.c ellipse.c -lm -o main
 
 Output (then `w` prints in the same format, with random values):
 
-```text
-x = [[ 1.000000,  2.000000,  3.000000],
+```out
+  x = [[ 1.000000,  2.000000,  3.000000],
      [ 4.000000,  5.000000,  6.000000]], dtype: _float
+     
+
+  w = [[-3.957385, -0.065465,  0.463001, -0.220345],
+      [-0.050230,  0.845438, -0.437089,  0.027297],
+      [-0.812468,  0.751349,  0.626047,  0.688481]], dtype: _float
 ```
 
 More examples: [Quick Start guide](Documentation/quick_start.md) · [Documentation](Documentation/documentation.md).

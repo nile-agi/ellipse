@@ -24,16 +24,16 @@ Ellipse is a minimal deep learning library written in pure C (C11), with no depe
 ## Installation
 
 ```sh
-git clone https://github.com/nile-agi/ellipse.git
+  git clone https://github.com/nile-agi/ellipse.git
 ```
 
 To use it in your own project, copy **both** `ellipse.h` and `ellipse.c` into your project, then compile them together with your code:
 
 ```sh
-gcc -std=c11 -O2 -Wall main.c ellipse.c -lm -o main
+  gcc -std=c11 -O2 -Wall main.c ellipse.c -lm -o main
 ```
 
-- `ellipse.h` is the public API: the `Tensor` type, declarations, the `torch` struct, and the `print` / `Size` macros.
+- `ellipse.h` is the public API: the `Tensor` type, declarations, the `ellipse` struct, and the `print` / `Size` macros.
 - `ellipse.c` is the implementation. The header alone will not link.
 - `-lm` links the math library (used by `sqrtf`, `logf`, `cosf` in the random generators).
 
@@ -46,13 +46,12 @@ New to C or to Ellipse? Start with the [Quick Start guide](./quick_start.md).
 `Tensor` is the building block of everything in Ellipse — a multi-dimensional array with a fixed dtype:
 
 ```c
-typedef struct {
-    Data  data;   /* union: int* or float* to the heap-allocated values */
-    int  *shape;  /* dimensions, e.g. {2, 3} = 2 rows, 3 columns        */
-    int   size;   /* total element count = product of shape             */
-    int   ndim;   /* number of dimensions (1 or 2 currently supported)  */
-    Dtype dtype;  /* _int or _float                                     */
-} Tensor;
+  typedef struct {
+      Data  data;   /* union: int* or float* to the heap-allocated values */
+      shape  shape;  /* dimensions, e.g. size(2, 3) = (int[]){2, 3}, 2 rows, 3 columns  and ndim = 2      */
+      int   size;   /* total element count = product of shape             */
+      Dtype dtype;  /* _int or _float                                     */
+  } Tensor;
 ```
 
 Data is stored **row-major**: element `(i, j)` of a 2-D tensor lives at `data[i * shape[1] + j]`.
@@ -77,19 +76,19 @@ All constructors return `Tensor *`, or `NULL` on allocation failure or invalid a
 ### tensor
 
 ```c
-Tensor *tensor(void *data, const int *shape, int ndim, Dtype dtype);
+  Tensor *tensor(void *data, const int shape. Dtype dtype);
 ```
 
 Creates a tensor from existing data. Example:
 
 ```c
-Tensor *x = tensor((float[]){1, 2, 3, 4, 5, 6}, (int[]){2, 3}, 2, _float);
+  Tensor *x = ellipse.tensor((float[]){1, 2, 3, 4, 5, 6}, size(), 3), ellipse._float);
 ```
 
 ### _rand
 
 ```c
-Tensor *_rand(int *shape, int ndim);
+  Tensor *_rand(int shape);
 ```
 
 Uniform random floats in `[0, 1)`. Always `_float`.
@@ -97,7 +96,7 @@ Uniform random floats in `[0, 1)`. Always `_float`.
 ### _randn
 
 ```c
-Tensor *_randn(int *shape, int ndim);
+  Tensor *_randn(int shape);
 ```
 
 Standard-normal random floats (mean 0, std 1) via the Box–Muller transform. Always `_float`. Guards against `log(0)`.
@@ -105,7 +104,7 @@ Standard-normal random floats (mean 0, std 1) via the Box–Muller transform. Al
 ### _randint
 
 ```c
-Tensor *_randint(int low, int high, int *shape, int ndim);
+  Tensor *_randint(int low, int high, int *shape);
 ```
 
 Random ints in `[low, high)` — `high` is **excluded**. Returns `NULL` with an error message if `high <= low` or the shape is invalid. Always `_int`.
@@ -113,8 +112,8 @@ Random ints in `[low, high)` — `high` is **excluded**. Returns `NULL` with an 
 ### _zeros / _ones
 
 ```c
-Tensor *_zeros(int *shape, int ndim, Dtype dtype);
-Tensor *_ones(int *shape, int ndim, Dtype dtype);
+  Tensor *_zeros(int shape, Dtype dtype);
+  Tensor *_ones(int shape, Dtype dtype);
 ```
 
 Filled tensors of either dtype. Invalid dtypes return `NULL`.
@@ -122,23 +121,23 @@ Filled tensors of either dtype. Invalid dtypes return `NULL`.
 ### free_t
 
 ```c
-void free_t(Tensor *t);
+  void free(Tensor *t);
 ```
 
-Frees the data, shape, and struct. Safe on `NULL`. Every tensor needs exactly one `free_t`.
+Frees the data, shape, and struct. Safe on `NULL`. Every tensor needs exactly one `free`.
 
 ### print / tensor_print
 
 ```c
-#define print(t)  /* -> tensor_print(t, #t) */
-void tensor_print(const Tensor *t, const char *name);
+  #define print(t)  /* -> tensor_print(t, #t) */
+  void tensor_print(const Tensor *t, const char *name);
 ```
 
 `print(x)` prints the tensor with the variable's name:
 
 ```text
-x = [[ 1.000000,  2.000000,  3.000000],
-     [ 4.000000,  5.000000,  6.000000]], dtype: _float
+  x = [[ 1.000000,  2.000000,  3.000000],
+      [ 4.000000,  5.000000,  6.000000]], dtype: _float
 ```
 
 The macro uses C11 `_Generic` + `_Static_assert` to reject anything that is not a `Tensor *` at compile time. Printing `NULL` shows `x = (null)`. 1-D and 2-D tensors are supported.
@@ -146,22 +145,22 @@ The macro uses C11 `_Generic` + `_Static_assert` to reject anything that is not 
 ### Seeding
 
 ```c
-torch.seed(42);   /* seed once for reproducible random tensors */
+  ellipse.seed(42);   /* seed once for reproducible random tensors */
 ```
 
-Without seeding, the RNG seeds itself from the clock on first use. Note: the header declares `ellipse_seed()`, but the implementation is currently still named `nan_seed()` in `ellipse.c` — until that rename lands, use `torch.seed()`, which points at the working implementation.
+Without seeding, the RNG seeds itself from the clock on first use. Note: the header declares `ellipse_seed()`, but the implementation is currently still named `nan_seed()` in `ellipse.c` — until that rename lands, use `ellipse.seed()`, which points at the working implementation.
 
 ### The Size macro
 
 ```c
-#define Size(...)   /* Size(2, 3) -> (int[]){2, 3}, 2 */
+  #define Size(...)   /* size(2, 3) -> (int[]){2, 3}, 2 */
 ```
 
 Expands to a shape compound literal **plus** its `ndim`, computed at compile time with `sizeof` (never evaluated at runtime). Use it wherever a `(shape, ndim)` pair is expected:
 
 ```c
-Tensor *a = torch.ones(Size(2, 3), _float);
-Tensor *b = _randn(Size(10), 1);   /* or simply: torch.randn(Size(10)) */
+Tensor *a = ellipse.ones(size(2, 3), ellipse._float);
+Tensor *b = ellipse._randn(size(10));   /* or simply: torch.randn(Size(10)) */
 ```
 
 ## The torch namespace
@@ -169,12 +168,12 @@ Tensor *b = _randn(Size(10), 1);   /* or simply: torch.randn(Size(10)) */
 C has no methods, but a struct of function pointers gets surprisingly close to PyTorch:
 
 ```c
-Tensor *a = torch.ones(Size(2, 3), torch._float);
-print(a);
-torch.free(a);
+  Tensor *a = ellipse.ones(size(2, 3), ellipse._float);
+  print(a);
+  ellipse.free(a);
 ```
 
-`torch` is a global `const` struct mapping friendly names to the plain C functions (`torch.rand` → `_rand`, `torch.free` → `free_t`, …) and exposing the dtype constants `torch._int` / `torch._float`. Both APIs are identical in behavior — pick whichever reads better to you.
+`torch` is a global `const` struct mapping friendly names to the plain C functions (`ellipse.rand` → `ellipse._rand`, `ellipse.free` → `ellipse.free`, …) and exposing the dtype constants `ellipse._int` / `ellipse._float`. Both APIs are identical in behavior — pick whichever reads better to you.
 
 ## The Ellipse stack
 

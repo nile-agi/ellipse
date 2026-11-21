@@ -27,13 +27,13 @@ A row flips to ✅ only when the code exists **and** a test in `test.c` exercise
 
 | Task | Status |
 | --- | --- |
-| `Tensor` struct (`data`, `shape`, `size`, `ndim`, `dtype`) | ✅ |
+| `Tensor` struct (`data`, `shape`, `size`, `dtype`) | ✅ |
 | `tensor()` — create from existing data (copies the input) | ✅ |
 | `_rand`, `_randn` (Box–Muller), `_randint` | ✅ |
 | `_zeros`, `_ones` | ✅ |
 | `print` / `tensor_print` (1-D and 2-D) | ✅ |
 | `free_t` — manual memory management (`malloc` / `memcpy` based) | ✅ |
-| `torch.*` namespace and `Size(...)` macro | ✅ |
+| `ellipse.*` namespace and `size(...)` macro | ✅ |
 | Seedable RNG — `torch.seed()` | ✅ |
 | Dtypes: `_int`, `_float` | ✅ |
 | Dtype: `double` | ❌ |
