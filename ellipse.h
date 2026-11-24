@@ -2,7 +2,7 @@
 
 /*
     Project name: ellipse
-    Creater: Isack odero
+    Creater: nileAGI
     Start Date: Jan 01 2026
 
     This is the minimal library for Machine Learning, Pytorch, this project inspired by by micrograd by Andrej Karpathy, micrograd by Geo Hotz.
@@ -39,11 +39,10 @@
 
     It give the Tensor Structure more room and capability to carry and manupulate different data of different data types
 */
-typedef union 
-{
-    float *_float;
-    int *_int;
-}Data;
+typedef union {
+    float   *_float;
+    int     *_int;
+} Data;
 // end of union Data
 
 /*
@@ -55,12 +54,22 @@ typedef union
 
     This help for dynamic Tensor define (memory allocation), manipulation and operations
 */
-typedef enum
-{
-    _int,
-    _float,
+typedef enum {
+    _int    = 0,
+    _float  = 1,
 } Dtype;
 // end Enum Dtype
+
+/*
+ * size
+ * ----
+ *  dims + ndims. Built by the size(...) macro from a compound liter
+ */
+typedef struct {
+    const int   *dims;
+    int         ndim;
+} size;
+
 
 /*
     Tensor Structure
@@ -77,38 +86,57 @@ typedef enum
 
     dtype is the data type of the tensor, this help us to allocate proper memory location to tensor and help in defining defferent random's, also simplify print of tensor.
 */
+
 typedef struct {
-    const int *dims;
-    int ndim;
-} shape;
-typedef struct {
-    Data data;
-    shape shape;
-    int size;
-    Dtype dtype; 
+    Data    data;
+    size    size;
+    size_t  t_size;
+    Dtype   dtype; 
 } Tensor;
 //end Tensor Structure
+
 
 /* Shape-from-brace-list helper:
  *   size(2, 3)  →  int* dims, int ndim => (int[]){2, 3}, 2
  *   size(10)    →  int* dims, int ndim => (int[]){10},   1
  * The sizeof is never evaluated at runtime (C11 §6.5.3.4p2).
  */
-#define Size(...) \
-    (int[]){__VA_ARGS__}, (int)(sizeof((int[]){__VA_ARGS__}) / sizeof(int))
+#define size(...)                                                     \
+    ((size){                                                          \
+        .dims = (int[]){__VA_ARGS__},                                 \
+        .ndim = (int)(sizeof((int[]){__VA_ARGS__}) / sizeof(int))     \
+    })
 
-#define size(...) \
-    ((shape){Size(__VA_ARGS__)})
+/* Pick the FIRST argument so _Generic has something to dispatch on.
+ * The sentinel makes 1-argument calls legal:  Arr(1)  →  FIRST(1, 0). */
+#define ELLIPSE_FIRST_(a, ...) (a)
+#define ELLIPSE_FIRST(...)     ELLIPSE_FIRST_(__VA_ARGS__, 0)
 
-// Tensor *tensor(void *data, const int *shape, int size, Dtype dtype);
-// Tensor *_rand(int *shape, int ndim);
-// Tensor *_randn(int *shape, int ndim);
-// Tensor *_randint(int low, int high, int *shape, int ndim);
-// // Tensor *range(void *, void *, void *);
-// Tensor *_zeros(int *shape, int ndim, Dtype dtype);
-// Tensor *_ones(int *shape, int ndim, Dtype dtype);
-// void free_t(Tensor *);
-// void ellipse_seed(unsigned int seed);   /* seed the RNG once for reproducibility */
+
+/*
+ * Arr(...) → partially-initialized Tensor
+ *   .data  : union holding the typed pointer  (int[]  or  float[])
+ *   .dtype : Dtype inferred from the FIRST literal
+ *   .size  : zero  (filled in by tensor())
+ *   .t_size: zero  (filled in by tensor())
+ *
+ * Both branches of every _Generic are compiled (C11 requires it);
+ * the one selected by the first literal's type is the one that runs.
+ */
+
+
+#define Arr(...)                                                                \
+   ((Tensor){                                                                   \
+       .data  = _Generic(ELLIPSE_FIRST(__VA_ARGS__),                            \
+                         int:    (Data){ ._int   = (int[])  { __VA_ARGS__ } },  \
+                         float:  (Data){ ._float = (float[]){ __VA_ARGS__ } },  \
+                         double: (Data){ ._float = (float[]){ __VA_ARGS__ } },  \
+                         default:(Data){ ._int   = (int[])  { __VA_ARGS__ } }), \
+       .dtype = _Generic(ELLIPSE_FIRST(__VA_ARGS__),                            \
+                         int: _int, float: _float, double: _float,              \
+                         default: _int)                                         \
+   })
+
 
 /*
     PyTorch-style namespace
@@ -128,13 +156,13 @@ typedef struct {
 
     /* constructors */
     int *(*size) (int *);
-    Tensor *(*tensor)(void *data,shape shape, Dtype dtype);
-    Tensor *(*rand)(shape shape);
-    Tensor *(*randn)(shape shape);
-    Tensor *(*randint)(int low, int high, shape shape);
+    Tensor *(*tensor)(Tensor partial,size size, Dtype dtype);
+    Tensor *(*rand)(size size);
+    Tensor *(*randn)(size size);
+    Tensor *(*randint)(int low, int high, size size);
     // Tensor *range(void *, void *, void *);
-    Tensor *(*zeros)(shape shape, Dtype dtype);
-    Tensor *(*ones)(shape shape, Dtype dtype);
+    Tensor *(*zeros)(size size, Dtype dtype);
+    Tensor *(*ones)(size size, Dtype dtype);
     void (*free)(Tensor *);
     void (*seed)(unsigned int seed);
 } ellipse_api;
